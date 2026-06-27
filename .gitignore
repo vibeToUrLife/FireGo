@@ -35,6 +35,9 @@ yarn-error.log*
 # …but DO commit the example so others know which vars to set.
 !.env.example
 
+# personal notes (kept local, never committed)
+MY-NOTES.md
+
 # vercel
 .vercel
 
