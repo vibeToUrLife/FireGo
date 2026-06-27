@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/*
+  FireGo design tokens.
+
+  The palette is deliberately calm and grounded — a trustworthy "deep water"
+  blue, a quiet green for "on track", and a muted red for "falls short". No
+  flashy gold, no acid accents, no purple/pink AI gradients. Backgrounds are a
+  soft cool off-white (not cream), surfaces are clean white, ink is a deep
+  navy-slate rather than pure black so long sessions stay easy on the eyes.
+
+  We declare raw values on :root, then expose them to Tailwind as utilities via
+  `@theme inline` (so `bg-primary`, `text-muted-foreground`, etc. all work). The
+  raw :root names (e.g. var(--positive)) are used directly inside the chart.
+*/
+
+:root {
+  --background: #f3f5f8;
+  --surface: #ffffff;
+  --foreground: #0f1b2d;
+
+  --muted: #eef1f6;
+  --muted-foreground: #586577;
+
+  --border: #e2e7ef;
+  --input: #d8dee8;
+
+  --primary: #1e40af;
+  --primary-foreground: #ffffff;
+  --primary-soft: #eaf0fc;
+
+  --positive: #0c7a52;
+  --positive-foreground: #ffffff;
+  --positive-soft: #e6f3ec;
+
+  --negative: #b42318;
+  --negative-foreground: #ffffff;
+  --negative-soft: #fbece9;
+
+  --warning: #a85a07;
+  --warning-soft: #fbf1e1;
+
+  --ring: #1e40af;
+
+  /* Chart hues */
+  --chart-accum: #1e40af;
+  --chart-draw: #0f766e;
+
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+
+  --color-positive: var(--positive);
+  --color-positive-foreground: var(--positive-foreground);
+  --color-positive-soft: var(--positive-soft);
+
+  --color-negative: var(--negative);
+  --color-negative-foreground: var(--negative-foreground);
+  --color-negative-soft: var(--negative-soft);
+
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-sm: calc(var(--radius) - 0.4rem);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Visible, consistent keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+/* Respect users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
