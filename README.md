@@ -49,6 +49,7 @@ that runs identically in the browser (instant results) and on the server
 | ---------------------------------------- | -------------------------------------------------------------------------------------------- |
 | **README.md**                            | This overview.                                                                               |
 | **[SETUP.md](./SETUP.md)**               | Step-by-step local setup from a fresh clone (Supabase + optional Google), beginner-friendly. |
+| **[DEPLOY.md](./DEPLOY.md)**             | Step-by-step guide to putting FireGo live on Vercel, beginner-friendly.                      |
 | **[LEARN.md](./LEARN.md)**               | A complete beginner's tour of the whole codebase and every technology used.                  |
 | **[ARCHITECTURE.md](./ARCHITECTURE.md)** | The design, the data model, and the key trade-offs.                                          |
 
@@ -103,24 +104,22 @@ You need a few environment variables in `.env` (see `.env.example`):
 
 ## Deploy to Vercel
 
-1. Push this repo to GitHub.
-2. In [Vercel](https://vercel.com), **Add New → Project** and import the repo.
-3. Use a Postgres database (Supabase, Vercel Postgres, or Neon). For serverless,
-   point `DATABASE_URL` at a **pooled** connection string.
-4. In **Project → Settings → Environment Variables**, set `DATABASE_URL`,
-   `DIRECT_URL`, `AUTH_SECRET`, and (optionally) `AUTH_GOOGLE_ID` /
-   `AUTH_GOOGLE_SECRET`.
-5. Deploy. The build runs `prisma generate` automatically.
-6. Create the tables on your production database once — locally, with
-   `DATABASE_URL`/`DIRECT_URL` pointed at production:
-   ```bash
-   npx prisma db push
-   ```
+> Full beginner walkthrough: **[DEPLOY.md](./DEPLOY.md)**. The short version:
 
-For Google sign-in in production, add the redirect URI
-`https://your-domain.com/api/auth/callback/google` to your Google OAuth client.
-Auth.js auto-detects the host (`trustHost: true`), so no extra `AUTH_URL` is
-needed.
+1. In [Vercel](https://vercel.com), **Add New → Project** and import this GitHub
+   repo (Vercel auto-detects Next.js — leave the build settings as is).
+2. In **Settings → Environment Variables**, set `DATABASE_URL`, `DIRECT_URL`,
+   `AUTH_SECRET`, and (optionally) `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` — the
+   same values from your `.env`. Point `DATABASE_URL` at the **pooled** (6543)
+   connection string. Do **not** set `AUTH_URL`.
+3. **Deploy.** The build runs `prisma generate && next build` automatically, and
+   if you reuse your existing Supabase project the tables already exist.
+4. For Google sign-in, add `https://your-domain.com/api/auth/callback/google` to
+   your Google OAuth client's redirect URIs. Auth.js auto-detects the host
+   (`trustHost: true` in `src/auth.ts`), so no `AUTH_URL` is needed.
+
+> Remember: changing an env var only takes effect on the **next** deploy —
+> redeploy after editing one.
 
 ---
 
