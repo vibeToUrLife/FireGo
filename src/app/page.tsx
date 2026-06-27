@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { Calculator } from "@/components/calculator/calculator";
 import { parseInputsFromQuery } from "@/lib/share";
+import { getDict } from "@/lib/i18n/server";
 
 /**
  * The public calculator. It's a server component so it can: (a) read the session
@@ -17,6 +18,7 @@ export default async function HomePage({
 }) {
   const session = await auth();
   const sp = await searchParams;
+  const t = await getDict();
 
   // Rebuild a query string from the params so we can reuse the shared parser.
   const query = new URLSearchParams();
@@ -28,14 +30,12 @@ export default async function HomePage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
       <section className="mx-auto max-w-2xl text-center">
-        <p className="text-primary text-sm font-medium">Retirement, honestly</p>
+        <p className="text-primary text-sm font-medium">{t.home.kicker}</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          Will your savings last through retirement?
+          {t.home.title}
         </h1>
         <p className="text-muted-foreground mt-3 text-pretty">
-          See how your money grows, when you could retire, and whether it lasts
-          — all in today&apos;s money, with no hype. Change anything and the
-          answer updates instantly.
+          {t.home.subtitle}
         </p>
       </section>
 

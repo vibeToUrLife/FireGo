@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDict } from "@/lib/i18n/provider";
 
 /**
  * Delete with a two-step inline confirm (no blocking native dialog). First click
  * reveals Delete / Cancel; confirming calls the API and refreshes the list.
  */
 export function DeletePlanButton({ planId }: { planId: string }) {
+  const t = useDict();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -31,7 +33,7 @@ export function DeletePlanButton({ planId }: { planId: string }) {
         variant="ghost"
         size="sm"
         onClick={() => setConfirming(true)}
-        aria-label="Delete plan"
+        aria-label={t.deletePlan.deleteAria}
       >
         <Trash2 />
       </Button>
@@ -47,10 +49,10 @@ export function DeletePlanButton({ planId }: { planId: string }) {
         disabled={deleting}
       >
         {deleting && <Loader2 className="animate-spin" />}
-        Delete
+        {t.deletePlan.delete}
       </Button>
       <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-        Cancel
+        {t.deletePlan.cancel}
       </Button>
     </span>
   );

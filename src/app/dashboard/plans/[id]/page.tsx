@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { parsePlanInputs } from "@/lib/plan";
+import { getDict } from "@/lib/i18n/server";
 import { Calculator } from "@/components/calculator/calculator";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -14,6 +15,7 @@ export default async function PlanPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const t = await getDict();
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -38,14 +40,14 @@ export default async function PlanPage({
         <Button asChild variant="ghost" size="sm">
           <Link href="/dashboard">
             <ArrowLeft />
-            Back to plans
+            {t.dashboard.backToPlans}
           </Link>
         </Button>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight">
           {plan.name}
         </h1>
         <p className="text-muted-foreground text-sm">
-          Adjust anything and hit Update to save your changes.
+          {t.dashboard.detailSubtitle}
         </p>
       </div>
 

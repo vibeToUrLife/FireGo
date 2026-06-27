@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import type { RetirementResult } from "@/lib/retirement.types";
 import { formatCurrency, formatCurrencyShort } from "@/lib/format";
+import { useDict } from "@/lib/i18n/provider";
 
 interface ChartPoint {
   age: number;
@@ -29,15 +30,22 @@ function ChartTooltip({
   payload?: Array<{ payload: ChartPoint }>;
   currency?: string;
 }) {
+  const t = useDict();
   if (!active || !payload || payload.length === 0) return null;
   const point = payload[0].payload;
   return (
     <div className="border-border bg-surface rounded-md border px-3 py-2 text-xs shadow-md">
-      <p className="text-foreground font-medium">Age {point.age}</p>
+      <p className="text-foreground font-medium">
+        {t.charts.ageLabel(point.age)}
+      </p>
       <p className="text-foreground font-mono tabular-nums">
         {formatCurrency(point.balance, currency)}
       </p>
-      <p className="text-muted-foreground capitalize">{point.phase}</p>
+      <p className="text-muted-foreground">
+        {point.phase === "accumulation"
+          ? t.charts.phaseAccumulation
+          : t.charts.phaseDrawdown}
+      </p>
     </div>
   );
 }
@@ -49,6 +57,7 @@ function ChartTooltip({
  * screen-reader-friendly version of this same data.
  */
 export function BalanceChart({ result }: { result: RetirementResult }) {
+  const t = useDict();
   const c = result.inputs.currency;
   const data: ChartPoint[] = result.yearly.map((y) => ({
     age: y.age,
@@ -66,8 +75,16 @@ export function BalanceChart({ result }: { result: RetirementResult }) {
       role="img"
       aria-label={
         result.willLast
-          ? `A chart showing your savings growing to ${formatCurrency(result.balanceAtRetirement, c)} by age ${retirementAge}, then lasting through age ${result.inputs.planToAge}.`
-          : `A chart showing your savings growing to ${formatCurrency(result.balanceAtRetirement, c)} by age ${retirementAge}, then running out around age ${depletionAge}.`
+          ? t.charts.balanceAriaOk(
+              formatCurrency(result.balanceAtRetirement, c),
+              retirementAge,
+              result.inputs.planToAge,
+            )
+          : t.charts.balanceAriaFail(
+              formatCurrency(result.balanceAtRetirement, c),
+              retirementAge,
+              String(depletionAge),
+            )
       }
     >
       <ResponsiveContainer width="100%" height="100%">
@@ -111,7 +128,7 @@ export function BalanceChart({ result }: { result: RetirementResult }) {
             stroke="var(--muted-foreground)"
             strokeDasharray="4 4"
             label={{
-              value: `Retire ${retirementAge}`,
+              value: t.charts.retire(retirementAge),
               position: "insideTopLeft",
               fill: "var(--muted-foreground)",
               fontSize: 11,
@@ -123,7 +140,7 @@ export function BalanceChart({ result }: { result: RetirementResult }) {
               stroke="var(--negative)"
               strokeDasharray="4 4"
               label={{
-                value: "Runs out",
+                value: t.charts.runsOut,
                 position: "insideTopRight",
                 fill: "var(--negative)",
                 fontSize: 11,

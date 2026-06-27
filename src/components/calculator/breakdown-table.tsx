@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
+import { useDict } from "@/lib/i18n/provider";
 
 /**
  * The same trajectory as the chart, but as numbers — collapsed by default to
@@ -16,6 +17,7 @@ import { ChevronDown } from "lucide-react";
 export function BreakdownTable({ result }: { result: RetirementResult }) {
   const [open, setOpen] = useState(false);
   const c = result.inputs.currency;
+  const t = useDict();
 
   return (
     <div>
@@ -28,7 +30,7 @@ export function BreakdownTable({ result }: { result: RetirementResult }) {
         <ChevronDown
           className={cn("transition-transform", open && "rotate-180")}
         />
-        {open ? "Hide" : "Show"} year-by-year breakdown
+        {open ? t.breakdown.hide : t.breakdown.show}
       </Button>
 
       {open && (
@@ -36,15 +38,27 @@ export function BreakdownTable({ result }: { result: RetirementResult }) {
           <table className="w-full min-w-[660px] border-collapse text-sm">
             <thead>
               <tr className="border-border bg-muted/60 text-muted-foreground border-b text-left text-xs">
-                <th className="px-3 py-2.5 font-medium">Age</th>
-                <th className="px-3 py-2.5 font-medium">Phase</th>
-                <th className="px-3 py-2.5 text-right font-medium">Start</th>
-                <th className="px-3 py-2.5 text-right font-medium">Added</th>
-                <th className="px-3 py-2.5 text-right font-medium">Growth</th>
-                <th className="px-3 py-2.5 text-right font-medium">
-                  Taken out
+                <th className="px-3 py-2.5 font-medium">
+                  {t.breakdown.colAge}
                 </th>
-                <th className="px-3 py-2.5 text-right font-medium">End</th>
+                <th className="px-3 py-2.5 font-medium">
+                  {t.breakdown.colPhase}
+                </th>
+                <th className="px-3 py-2.5 text-right font-medium">
+                  {t.breakdown.colStart}
+                </th>
+                <th className="px-3 py-2.5 text-right font-medium">
+                  {t.breakdown.colAdded}
+                </th>
+                <th className="px-3 py-2.5 text-right font-medium">
+                  {t.breakdown.colGrowth}
+                </th>
+                <th className="px-3 py-2.5 text-right font-medium">
+                  {t.breakdown.colTakenOut}
+                </th>
+                <th className="px-3 py-2.5 text-right font-medium">
+                  {t.breakdown.colEnd}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -58,7 +72,9 @@ export function BreakdownTable({ result }: { result: RetirementResult }) {
                     <Badge
                       tone={y.phase === "accumulation" ? "primary" : "neutral"}
                     >
-                      {y.phase === "accumulation" ? "Saving" : "Drawing"}
+                      {y.phase === "accumulation"
+                        ? t.breakdown.phaseSaving
+                        : t.breakdown.phaseDrawing}
                     </Badge>
                   </td>
                   <td className="text-muted-foreground px-3 py-2 text-right font-mono tabular-nums">

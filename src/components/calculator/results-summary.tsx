@@ -1,10 +1,8 @@
+"use client";
+
 import type { RetirementResult } from "@/lib/retirement.types";
-import {
-  formatCurrency,
-  formatAge,
-  formatYears,
-  formatPercent,
-} from "@/lib/format";
+import { formatCurrency, formatAge, formatPercent } from "@/lib/format";
+import { useDict } from "@/lib/i18n/provider";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -45,6 +43,7 @@ function Stat({
 }
 
 export function ResultsSummary({ result }: { result: RetirementResult }) {
+  const t = useDict();
   const {
     inputs,
     willLast,
@@ -57,9 +56,11 @@ export function ResultsSummary({ result }: { result: RetirementResult }) {
     warnings,
   } = result;
   const c = inputs.currency;
+  const depletionText = depletionAge !== null ? formatAge(depletionAge) : "—";
+  const yearsShortText = t.format.years(Math.round(yearsShort));
 
   return (
-    <section aria-label="Your results" className="space-y-4">
+    <section aria-label={t.results.ariaResults} className="space-y-4">
       {/* Headline verdict */}
       <Card
         className={cn(
@@ -71,12 +72,12 @@ export function ResultsSummary({ result }: { result: RetirementResult }) {
           {willLast ? (
             <Badge tone="positive">
               <CircleCheck className="size-3.5" />
-              On track
+              {t.results.onTrack}
             </Badge>
           ) : (
             <Badge tone="negative">
               <TriangleAlert className="size-3.5" />
-              Falls short
+              {t.results.fallsShort}
             </Badge>
           )}
         </div>
@@ -84,24 +85,24 @@ export function ResultsSummary({ result }: { result: RetirementResult }) {
         {willLast ? (
           <>
             <h2 className="mt-3 text-xl font-semibold tracking-tight sm:text-2xl">
-              Your savings last through age {inputs.planToAge}.
+              {t.results.lastsThroughAge(inputs.planToAge)}
             </h2>
             <p className="text-muted-foreground mt-1 text-sm">
               {endingBalance > 1
-                ? `You'd have roughly ${formatCurrency(endingBalance, c)} left over at age ${inputs.planToAge} — a comfortable margin.`
-                : "It's close — your savings cover your plan with little to spare."}
+                ? t.results.leftOver(
+                    formatCurrency(endingBalance, c),
+                    inputs.planToAge,
+                  )
+                : t.results.itsClose}
             </p>
           </>
         ) : (
           <>
             <h2 className="mt-3 text-xl font-semibold tracking-tight sm:text-2xl">
-              Your savings run out around age{" "}
-              {depletionAge !== null ? formatAge(depletionAge) : "—"}.
+              {t.results.runsOutAroundAge(depletionText)}
             </h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              That&apos;s about {formatYears(yearsShort)} short of your age-
-              {inputs.planToAge} goal. Try saving a little more, spending less,
-              or retiring later.
+              {t.results.shortfallBody(yearsShortText, inputs.planToAge)}
             </p>
           </>
         )}
@@ -111,41 +112,47 @@ export function ResultsSummary({ result }: { result: RetirementResult }) {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           icon={<Wallet />}
-          label="At retirement"
+          label={t.results.statAtRetirement}
           value={formatCurrency(balanceAtRetirement, c)}
-          sub={`saved by age ${inputs.retirementAge}`}
+          sub={t.results.statSavedByAge(inputs.retirementAge)}
         />
         <Stat
           icon={<CalendarClock />}
-          label="Money lasts to"
+          label={t.results.statMoneyLastsTo}
           value={
             willLast
-              ? `Age ${inputs.planToAge}+`
-              : `Age ${depletionAge !== null ? formatAge(depletionAge) : "—"}`
+              ? t.results.statAgePlus(inputs.planToAge)
+              : t.results.statAgeValue(depletionText)
           }
-          sub={willLast ? "your full plan" : `${formatYears(yearsShort)} short`}
+          sub={
+            willLast
+              ? t.results.statFullPlan
+              : t.results.statShort(yearsShortText)
+          }
         />
         <Stat
           icon={<Coins />}
-          label="Can spend / year"
+          label={t.results.statCanSpend}
           value={formatCurrency(sustainableAnnualSpending, c)}
-          sub={`≈ ${formatCurrency(sustainableAnnualSpending / 12, c)}/mo sustainably`}
+          sub={t.results.statPerMoSustainably(
+            formatCurrency(sustainableAnnualSpending / 12, c),
+          )}
         />
         <Stat
           icon={<TrendingUp />}
-          label="Real return"
+          label={t.results.statRealReturn}
           value={formatPercent(realAnnualReturnPct)}
-          sub="a year, after inflation"
+          sub={t.results.statPerYearAfterInflation}
         />
       </div>
 
       {/* Calm, non-alarming notes about unusual inputs */}
       {warnings.length > 0 && (
         <ul className="space-y-1.5">
-          {warnings.map((w, i) => (
-            <li key={i} className="text-muted-foreground flex gap-2 text-xs">
+          {warnings.map((w) => (
+            <li key={w} className="text-muted-foreground flex gap-2 text-xs">
               <Info className="mt-0.5 size-3.5 shrink-0" />
-              <span>{w}</span>
+              <span>{t.warnings[w]}</span>
             </li>
           ))}
         </ul>

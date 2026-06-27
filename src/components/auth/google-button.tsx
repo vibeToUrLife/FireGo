@@ -2,9 +2,11 @@
 
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { useDict } from "@/lib/i18n/provider";
 
 /** "Continue with Google" — kicks off the OAuth flow, returning to `callbackUrl`. */
 export function GoogleButton({ callbackUrl }: { callbackUrl: string }) {
+  const t = useDict();
   return (
     <Button
       type="button"
@@ -30,7 +32,7 @@ export function GoogleButton({ callbackUrl }: { callbackUrl: string }) {
           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06L5.84 9.9c.87-2.6 3.3-4.52 6.16-4.52Z"
         />
       </svg>
-      Continue with Google
+      {t.auth.continueWithGoogle}
     </Button>
   );
 }

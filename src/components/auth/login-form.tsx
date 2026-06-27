@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoogleButton } from "./google-button";
+import { useDict } from "@/lib/i18n/provider";
 
 export function LoginForm({
   googleEnabled,
@@ -16,6 +17,7 @@ export function LoginForm({
   googleEnabled: boolean;
   next: string;
 }) {
+  const t = useDict();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +36,7 @@ export function LoginForm({
     });
     setLoading(false);
     if (res?.error) {
-      setError("That email and password don't match. Please try again.");
+      setError(t.auth.loginError);
       return;
     }
     router.push(next);
@@ -48,7 +50,7 @@ export function LoginForm({
           <GoogleButton callbackUrl={next} />
           <div className="text-muted-foreground flex items-center gap-3 text-xs">
             <span className="bg-border h-px flex-1" />
-            or
+            {t.auth.or}
             <span className="bg-border h-px flex-1" />
           </div>
         </>
@@ -56,7 +58,7 @@ export function LoginForm({
 
       <form onSubmit={onSubmit} className="space-y-3">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t.auth.email}</Label>
           <Input
             id="email"
             type="email"
@@ -67,7 +69,7 @@ export function LoginForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t.auth.password}</Label>
           <Input
             id="password"
             type="password"
@@ -86,7 +88,7 @@ export function LoginForm({
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="animate-spin" />}
-          Sign in
+          {t.auth.signIn}
         </Button>
       </form>
     </div>

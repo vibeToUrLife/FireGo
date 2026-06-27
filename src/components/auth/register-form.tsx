@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoogleButton } from "./google-button";
+import { useDict } from "@/lib/i18n/provider";
 
 export function RegisterForm({
   googleEnabled,
@@ -16,6 +17,7 @@ export function RegisterForm({
   googleEnabled: boolean;
   next: string;
 }) {
+  const t = useDict();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -38,9 +40,7 @@ export function RegisterForm({
     if (!res.ok) {
       setLoading(false);
       setError(
-        data?.error ??
-          data?.issues?.[0]?.message ??
-          "Couldn't create your account.",
+        data?.error ?? data?.issues?.[0]?.message ?? t.auth.registerError,
       );
       return;
     }
@@ -67,7 +67,7 @@ export function RegisterForm({
           <GoogleButton callbackUrl={next} />
           <div className="text-muted-foreground flex items-center gap-3 text-xs">
             <span className="bg-border h-px flex-1" />
-            or
+            {t.auth.or}
             <span className="bg-border h-px flex-1" />
           </div>
         </>
@@ -75,7 +75,7 @@ export function RegisterForm({
 
       <form onSubmit={onSubmit} className="space-y-3">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t.auth.name}</Label>
           <Input
             id="name"
             type="text"
@@ -86,7 +86,7 @@ export function RegisterForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t.auth.email}</Label>
           <Input
             id="email"
             type="email"
@@ -97,7 +97,7 @@ export function RegisterForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t.auth.password}</Label>
           <Input
             id="password"
             type="password"
@@ -108,7 +108,7 @@ export function RegisterForm({
             onChange={(e) => setPassword(e.target.value)}
           />
           <p className="text-muted-foreground text-xs">
-            At least 8 characters.
+            {t.auth.passwordHelper}
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export function RegisterForm({
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="animate-spin" />}
-          Create account
+          {t.auth.createAccount}
         </Button>
       </form>
     </div>

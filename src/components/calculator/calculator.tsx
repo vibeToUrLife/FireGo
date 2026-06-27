@@ -8,8 +8,8 @@ import { DEFAULT_INPUTS } from "@/lib/constants";
 import { inputsToQuery } from "@/lib/share";
 import { InputsForm } from "./inputs-form";
 import { ResultsSummary } from "./results-summary";
-import { BalanceChart } from "./balance-chart";
-import { BreakdownTable } from "./breakdown-table";
+import { SpendingComparison } from "./spending-comparison";
+import { ChartPanel } from "./chart-panel";
 import { Disclaimer } from "./disclaimer";
 import { SavePlanBar } from "./save-plan-bar";
 import {
@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useDict } from "@/lib/i18n/provider";
 
 export interface CalculatorProps {
   /** Pre-fill from a saved plan. When omitted, we read the URL or fall back to defaults. */
@@ -45,6 +46,7 @@ export function Calculator({
   planName,
   syncUrl = false,
 }: CalculatorProps) {
+  const t = useDict();
   // The starting inputs are resolved on the server (from a saved plan or from
   // the URL query) and passed in, so the first render already shows the right
   // scenario — no flash, no hydration mismatch.
@@ -88,10 +90,8 @@ export function Calculator({
       {/* Inputs */}
       <Card>
         <CardHeader>
-          <CardTitle>Your numbers</CardTitle>
-          <CardDescription>
-            Adjust anything — the results update instantly.
-          </CardDescription>
+          <CardTitle>{t.calculator.yourNumbers}</CardTitle>
+          <CardDescription>{t.calculator.adjustHint}</CardDescription>
         </CardHeader>
         <CardContent>
           <InputsForm inputs={inputs} onChange={update} errors={errors} />
@@ -102,16 +102,17 @@ export function Calculator({
       <div className="space-y-6">
         <ResultsSummary result={result} />
 
+        <SpendingComparison result={result} />
+
         <Card>
           <CardHeader>
-            <CardTitle>Your savings over time</CardTitle>
+            <CardTitle>{t.calculator.savingsOverTime}</CardTitle>
             <CardDescription>
-              From age {inputs.currentAge} through age {inputs.planToAge}.
+              {t.calculator.fromAgeThrough(inputs.currentAge, inputs.planToAge)}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <BalanceChart result={result} />
-            <BreakdownTable result={result} />
+          <CardContent>
+            <ChartPanel result={result} />
           </CardContent>
         </Card>
 

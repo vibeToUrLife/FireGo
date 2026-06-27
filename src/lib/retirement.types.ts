@@ -24,6 +24,16 @@ export type RetirementStatus =
   | "depletes_early"; // savings run out before planToAge
 
 /**
+ * A language-neutral code for each note the engine can raise. The UI maps these
+ * to translated, human-readable text — keeping the pure engine free of any
+ * particular language.
+ */
+export type WarningCode =
+  | "inflationOutpacesReturn"
+  | "retiredAlready"
+  | "incomeCoversSpending";
+
+/**
  * Everything the user can tweak. All numbers are plain numbers (already parsed
  * and validated by the Zod schema in validation.ts before they reach here).
  */
@@ -116,6 +126,6 @@ export interface RetirementResult {
   /** The full accumulation + drawdown trajectory, one entry per year. */
   yearly: YearRow[];
   status: RetirementStatus;
-  /** Plain-language notes about the projection (e.g. unusual inputs). */
-  warnings: string[];
+  /** Notes about the projection (e.g. unusual inputs), as translatable codes. */
+  warnings: WarningCode[];
 }

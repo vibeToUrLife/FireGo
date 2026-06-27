@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { parsePlanInputs } from "@/lib/plan";
 import { projectRetirement } from "@/lib/retirement";
 import { formatCurrency, formatAge } from "@/lib/format";
+import { getDict } from "@/lib/i18n/server";
 import {
   Card,
   CardContent,
@@ -21,6 +22,7 @@ import { CircleCheck, TriangleAlert, Plus, ArrowRight } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const t = await getDict();
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login?next=/dashboard");
@@ -35,29 +37,32 @@ export default async function DashboardPage() {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Your plans</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t.dashboard.title}
+          </h1>
           <p className="text-muted-foreground text-sm">
-            Scenarios you&apos;ve saved. Open one to revisit or adjust it.
+            {t.dashboard.subtitle}
           </p>
         </div>
         <Button asChild>
           <Link href="/">
             <Plus />
-            New plan
+            {t.dashboard.newPlan}
           </Link>
         </Button>
       </div>
 
       {plans.length === 0 ? (
         <Card className="mt-8 p-10 text-center">
-          <p className="text-foreground font-medium">No saved plans yet</p>
+          <p className="text-foreground font-medium">
+            {t.dashboard.emptyTitle}
+          </p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-sm">
-            Build a scenario on the calculator, then hit “Save plan” to keep it
-            here and come back to it anytime.
+            {t.dashboard.emptyBody}
           </p>
           <Button asChild className="mt-4">
             <Link href="/">
-              Open the calculator
+              {t.dashboard.openCalculator}
               <ArrowRight />
             </Link>
           </Button>
@@ -77,19 +82,21 @@ export default async function DashboardPage() {
                       (result.willLast ? (
                         <Badge tone="positive">
                           <CircleCheck className="size-3.5" />
-                          On track
+                          {t.dashboard.onTrack}
                         </Badge>
                       ) : (
                         <Badge tone="negative">
                           <TriangleAlert className="size-3.5" />
-                          Short
+                          {t.dashboard.short}
                         </Badge>
                       ))}
                   </div>
                   {inputs && (
                     <CardDescription>
-                      Retire at {inputs.retirementAge}, plan to{" "}
-                      {inputs.planToAge}
+                      {t.dashboard.retireAtPlanTo(
+                        inputs.retirementAge,
+                        inputs.planToAge,
+                      )}
                     </CardDescription>
                   )}
                 </CardHeader>
@@ -98,7 +105,9 @@ export default async function DashboardPage() {
                   {result && inputs ? (
                     <dl className="space-y-1 text-sm">
                       <div className="flex justify-between gap-2">
-                        <dt className="text-muted-foreground">At retirement</dt>
+                        <dt className="text-muted-foreground">
+                          {t.dashboard.atRetirement}
+                        </dt>
                         <dd className="font-mono tabular-nums">
                           {formatCurrency(
                             result.balanceAtRetirement,
@@ -108,24 +117,30 @@ export default async function DashboardPage() {
                       </div>
                       <div className="flex justify-between gap-2">
                         <dt className="text-muted-foreground">
-                          Money lasts to
+                          {t.dashboard.moneyLastsTo}
                         </dt>
                         <dd className="font-mono tabular-nums">
                           {result.willLast
-                            ? `Age ${inputs.planToAge}+`
-                            : `Age ${result.depletionAge !== null ? formatAge(result.depletionAge) : "—"}`}
+                            ? t.dashboard.agePlus(inputs.planToAge)
+                            : t.dashboard.ageValue(
+                                result.depletionAge !== null
+                                  ? formatAge(result.depletionAge)
+                                  : "—",
+                              )}
                         </dd>
                       </div>
                     </dl>
                   ) : (
                     <p className="text-muted-foreground text-sm">
-                      Saved scenario.
+                      {t.dashboard.savedScenario}
                     </p>
                   )}
 
                   <div className="flex items-center justify-between gap-2 pt-2">
                     <Button asChild variant="secondary" size="sm">
-                      <Link href={`/dashboard/plans/${plan.id}`}>Open</Link>
+                      <Link href={`/dashboard/plans/${plan.id}`}>
+                        {t.dashboard.open}
+                      </Link>
                     </Button>
                     <DeletePlanButton planId={plan.id} />
                   </div>

@@ -2,6 +2,7 @@
 
 import type { RetirementInputs } from "@/lib/retirement.types";
 import { LIMITS, CURRENCIES } from "@/lib/constants";
+import { useDict } from "@/lib/i18n/provider";
 import { NumberField } from "./number-field";
 import { Label } from "@/components/ui/label";
 import {
@@ -42,47 +43,48 @@ function Section({
  * keep in sync, which keeps the live-update behaviour simple and predictable.
  */
 export function InputsForm({ inputs, onChange, errors }: InputsFormProps) {
+  const t = useDict();
   const money = inputs.currency;
 
   return (
     <div className="space-y-7">
-      <Section title="Your timeline">
+      <Section title={t.inputs.sectionTimeline}>
         <NumberField
-          label="Current age"
+          label={t.inputs.currentAge}
           value={inputs.currentAge}
           onChange={(v) => onChange({ currentAge: v })}
           min={LIMITS.age.min}
           max={LIMITS.age.max}
           slider
-          suffix="yrs"
+          suffix={t.inputs.yearsSuffix}
           error={errors.currentAge}
         />
         <NumberField
-          label="Retirement age"
+          label={t.inputs.retirementAge}
           value={inputs.retirementAge}
           onChange={(v) => onChange({ retirementAge: v })}
           min={LIMITS.age.min}
           max={LIMITS.age.max}
           slider
-          suffix="yrs"
+          suffix={t.inputs.yearsSuffix}
           error={errors.retirementAge}
         />
         <NumberField
-          label="Plan until age"
+          label={t.inputs.planToAge}
           value={inputs.planToAge}
           onChange={(v) => onChange({ planToAge: v })}
           min={LIMITS.planToAge.min}
           max={LIMITS.planToAge.max}
           slider
-          suffix="yrs"
-          helper="A planning horizon — how long the money may need to last."
+          suffix={t.inputs.yearsSuffix}
+          helper={t.inputs.planToAgeHelper}
           error={errors.planToAge}
         />
       </Section>
 
-      <Section title="Saving up">
+      <Section title={t.inputs.sectionSaving}>
         <NumberField
-          label="Current savings"
+          label={t.inputs.currentSavings}
           value={inputs.currentSavings}
           onChange={(v) => onChange({ currentSavings: v })}
           min={LIMITS.money.min}
@@ -91,111 +93,112 @@ export function InputsForm({ inputs, onChange, errors }: InputsFormProps) {
           error={errors.currentSavings}
         />
         <NumberField
-          label="Monthly contribution"
+          label={t.inputs.monthlyContribution}
           value={inputs.monthlyContribution}
           onChange={(v) => onChange({ monthlyContribution: v })}
           min={LIMITS.monthlyMoney.min}
           prefix={money}
           step={100}
-          helper="What you put away each month, in today's money."
+          helper={t.inputs.monthlyContributionHelper}
           error={errors.monthlyContribution}
         />
         <NumberField
-          label="Monthly income (optional)"
+          label={t.inputs.monthlyIncome}
           value={inputs.monthlyIncome}
           onChange={(v) => onChange({ monthlyIncome: v })}
           min={LIMITS.monthlyMoney.min}
           prefix={money}
           step={100}
-          helper="Only used to work out your pension contribution below."
+          helper={t.inputs.monthlyIncomeHelper}
           error={errors.monthlyIncome}
         />
         <NumberField
-          label="Pension / employer contribution"
+          label={t.inputs.pension}
           value={inputs.pensionContributionPct}
           onChange={(v) => onChange({ pensionContributionPct: v })}
           min={LIMITS.pct.min}
           max={LIMITS.pct.max}
           slider
-          suffix="%"
-          helper="Of your monthly income (employer + employee)."
+          suffix={t.inputs.pctSuffix}
+          helper={t.inputs.pensionHelper}
           error={errors.pensionContributionPct}
         />
         <NumberField
-          label="Yearly contribution increase"
+          label={t.inputs.yearlyIncrease}
           value={inputs.annualContributionIncreasePct}
           onChange={(v) => onChange({ annualContributionIncreasePct: v })}
           min={LIMITS.raisePct.min}
           max={LIMITS.raisePct.max}
           slider
-          suffix="%"
-          helper="Real raises above inflation. Leave at 0 if unsure."
+          suffix={t.inputs.pctSuffix}
+          helper={t.inputs.yearlyIncreaseHelper}
           error={errors.annualContributionIncreasePct}
         />
       </Section>
 
-      <Section title="Growth & inflation">
+      <Section title={t.inputs.sectionGrowth}>
         <NumberField
-          label="Expected return (before inflation)"
+          label={t.inputs.expectedReturn}
           value={inputs.nominalReturnPct}
           onChange={(v) => onChange({ nominalReturnPct: v })}
           min={LIMITS.returnPct.min}
           max={LIMITS.returnPct.max}
           slider
           step={0.1}
-          suffix="%"
-          helper="A broad market average is often 5–8% a year."
+          suffix={t.inputs.pctSuffix}
+          helper={t.inputs.expectedReturnHelper}
           error={errors.nominalReturnPct}
         />
         <NumberField
-          label="Inflation"
+          label={t.inputs.inflation}
           value={inputs.inflationPct}
           onChange={(v) => onChange({ inflationPct: v })}
           min={LIMITS.inflationPct.min}
           max={LIMITS.inflationPct.max}
           slider
           step={0.1}
-          suffix="%"
-          helper="How fast prices rise. Often around 2–3% a year."
+          suffix={t.inputs.pctSuffix}
+          helper={t.inputs.inflationHelper}
           error={errors.inflationPct}
         />
       </Section>
 
-      <Section title="In retirement">
+      <Section title={t.inputs.sectionRetirement}>
         <NumberField
-          label="Desired yearly spending"
+          label={t.inputs.desiredSpending}
           value={inputs.desiredAnnualSpending}
           onChange={(v) => onChange({ desiredAnnualSpending: v })}
           min={LIMITS.money.min}
           prefix={money}
           step={1000}
-          helper="In today's money — what a year of retirement costs you now."
+          helper={t.inputs.desiredSpendingHelper}
           error={errors.desiredAnnualSpending}
         />
         <NumberField
-          label="Other yearly income (optional)"
+          label={t.inputs.otherIncome}
           value={inputs.otherAnnualIncome}
           onChange={(v) => onChange({ otherAnnualIncome: v })}
           min={LIMITS.money.min}
           prefix={money}
           step={1000}
-          helper="Government pension, annuity, rent… reduces what savings must cover."
+          helper={t.inputs.otherIncomeHelper}
           error={errors.otherAnnualIncome}
         />
 
         <div className="space-y-2">
-          <Label>Currency</Label>
+          <Label>{t.inputs.currency}</Label>
           <Select
             value={inputs.currency}
             onValueChange={(v) => onChange({ currency: v })}
           >
-            <SelectTrigger aria-label="Currency">
+            <SelectTrigger aria-label={t.inputs.currency}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {CURRENCIES.map((c) => (
                 <SelectItem key={c.symbol} value={c.symbol}>
-                  {c.label}
+                  {t.currencies[c.symbol as keyof typeof t.currencies] ??
+                    c.label}
                 </SelectItem>
               ))}
             </SelectContent>

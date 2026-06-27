@@ -27,6 +27,7 @@ import type {
   RetirementResult,
   YearRow,
   Phase,
+  WarningCode,
 } from "./retirement.types";
 
 const MONTHS_PER_YEAR = 12;
@@ -141,15 +142,13 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
     otherAnnualIncome,
   } = inputs;
 
-  const warnings: string[] = [];
+  const warnings: WarningCode[] = [];
 
   // 1. Rates.
   const realReturn = computeRealReturn(nominalReturnPct, inflationPct);
   const rm = monthlyRate(realReturn);
   if (realReturn < 0) {
-    warnings.push(
-      "Your inflation rate is higher than your return, so money loses value in real terms over time.",
-    );
+    warnings.push("inflationOutpacesReturn");
   }
 
   // 2. Horizon, measured in whole months. Ages are integers, so these are exact.
@@ -161,9 +160,7 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
   const drawdownMonths = totalMonths - accumMonths;
 
   if (retirementAge <= currentAge) {
-    warnings.push(
-      "Your retirement age is at or before your current age, so there's no time left to save — this shows the drawdown only.",
-    );
+    warnings.push("retiredAlready");
   }
 
   // 3. What we must pull from savings each year (the rest is covered by other income).
@@ -269,9 +266,7 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
   );
 
   if (otherAnnualIncome >= desiredAnnualSpending && desiredAnnualSpending > 0) {
-    warnings.push(
-      "Your other retirement income already covers your spending, so your savings are never drawn down.",
-    );
+    warnings.push("incomeCoversSpending");
   }
 
   return {

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Check, Link2, Save, Loader2 } from "lucide-react";
+import { useDict } from "@/lib/i18n/provider";
 
 export interface SavePlanBarProps {
   inputs: RetirementInputs;
@@ -28,6 +29,7 @@ export function SavePlanBar({
   planId,
   initialName,
 }: SavePlanBarProps) {
+  const t = useDict();
   const router = useRouter();
   const [name, setName] = useState(initialName ?? "");
   const [saving, setSaving] = useState(false);
@@ -41,9 +43,7 @@ export function SavePlanBar({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError(
-        "Couldn't copy the link — copy it from the address bar instead.",
-      );
+      setError(t.savePlan.copyError);
     }
   }
 
@@ -56,13 +56,13 @@ export function SavePlanBar({
         method: planId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name.trim() || "My retirement plan",
+          name: name.trim() || t.savePlan.defaultName,
           inputs,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error ?? "Couldn't save. Please try again.");
+        setError(data?.error ?? t.savePlan.saveError);
         return;
       }
       setSaved(true);
@@ -72,7 +72,7 @@ export function SavePlanBar({
         router.refresh();
       }
     } catch {
-      setError("Network problem — please try again.");
+      setError(t.savePlan.networkError);
     } finally {
       setSaving(false);
     }
@@ -88,19 +88,17 @@ export function SavePlanBar({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm">
           <p className="text-foreground font-medium">
-            {planId ? "Update this plan" : "Save this scenario"}
+            {planId ? t.savePlan.headingUpdate : t.savePlan.headingSave}
           </p>
           <p className="text-muted-foreground">
-            {isAuthed
-              ? "Keep it in your dashboard to revisit later."
-              : "Sign in to keep your scenarios — your numbers come with you."}
+            {isAuthed ? t.savePlan.subAuthed : t.savePlan.subUnauthed}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" size="sm" onClick={copyLink}>
             {copied ? <Check /> : <Link2 />}
-            {copied ? "Copied" : "Copy link"}
+            {copied ? t.savePlan.copied : t.savePlan.copyLink}
           </Button>
 
           {isAuthed ? (
@@ -108,8 +106,8 @@ export function SavePlanBar({
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Plan name"
-                aria-label="Plan name"
+                placeholder={t.savePlan.planNamePlaceholder}
+                aria-label={t.savePlan.planNamePlaceholder}
                 className="h-9 w-40"
               />
               <Button size="sm" onClick={save} disabled={saving}>
@@ -120,12 +118,12 @@ export function SavePlanBar({
                 ) : (
                   <Save />
                 )}
-                {planId ? "Update" : "Save plan"}
+                {planId ? t.savePlan.update : t.savePlan.savePlanBtn}
               </Button>
             </>
           ) : (
             <Button size="sm" onClick={goSignIn}>
-              Sign in to save
+              {t.savePlan.signInToSave}
             </Button>
           )}
         </div>
@@ -133,7 +131,7 @@ export function SavePlanBar({
 
       {error && <p className="text-negative mt-2 text-xs">{error}</p>}
       {saved && !error && (
-        <p className="text-positive mt-2 text-xs">Saved to your dashboard.</p>
+        <p className="text-positive mt-2 text-xs">{t.savePlan.saved}</p>
       )}
     </Card>
   );

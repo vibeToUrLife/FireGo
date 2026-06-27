@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -27,10 +27,43 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
+/** A number as the text we'd show for it (non-finite → empty). */
+function toText(n: number): string {
+  return Number.isFinite(n) ? String(n) : "";
+}
+
+/**
+ * Tidy what the user types: keep digits and at most one decimal point, an
+ * optional leading minus (only where negatives make sense), and no leading
+ * zeros — so clearing the field and typing "23" gives "23", never "023".
+ */
+function sanitize(raw: string, allowNegative: boolean): string {
+  let s = raw.replace(/[^\d.-]/g, "");
+  s = (allowNegative && s.startsWith("-") ? "-" : "") + s.replace(/-/g, "");
+  const dot = s.indexOf(".");
+  if (dot !== -1) {
+    s = s.slice(0, dot + 1) + s.slice(dot + 1).replace(/\./g, "");
+  }
+  // Drop leading zeros, but keep a lone "0" and decimals like "0.5".
+  s = s.replace(/^(-?)0+(?=\d)/, "$1");
+  return s;
+}
+
+/** Parse the editable text into the number we report upward. */
+function toNumber(text: string): number {
+  if (text === "" || text === "-" || text === "." || text === "-.") return 0;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : 0;
+}
+
 /**
  * One labelled numeric input — optionally with a currency/percent affix and a
- * companion slider. Controlled: it always reflects `value` and reports changes
- * via `onChange`, so results recompute live as the user types or drags.
+ * companion slider.
+ *
+ * The text the user sees is held in local state, so the field can sit empty or
+ * mid-edit (e.g. "0.") instead of being snapped back to a number on every
+ * keystroke. We only ever push a parsed number up to the parent, and we adopt
+ * changes that come from *outside* the field (a slider drag, a loaded plan).
  */
 export function NumberField({
   label,
@@ -46,15 +79,39 @@ export function NumberField({
   slider = false,
 }: NumberFieldProps) {
   const id = useId();
+  const allowNegative = min === undefined ? true : min < 0;
+
+  const [text, setText] = useState<string>(() => toText(value));
+  const [prevValue, setPrevValue] = useState<number>(value);
+
+  // When `value` changes for a reason other than our own typing (slider reset,
+  // a saved plan loading), adopt it. We compare against `prevValue` so the echo
+  // of our own onChange doesn't clobber what the user is in the middle of.
+  if (value !== prevValue) {
+    setPrevValue(value);
+    if (toNumber(text) !== value) setText(toText(value));
+  }
+
   const describedBy = error
     ? `${id}-error`
     : helper
       ? `${id}-helper`
       : undefined;
 
+  const emit = (n: number) => {
+    setPrevValue(n);
+    onChange(n);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const next = e.target.valueAsNumber;
-    onChange(Number.isNaN(next) ? 0 : next);
+    const cleaned = sanitize(e.target.value, allowNegative);
+    setText(cleaned);
+    emit(toNumber(cleaned));
+  };
+
+  const handleSlider = (v: number[]) => {
+    setText(toText(v[0]));
+    emit(v[0]);
   };
 
   return (
@@ -69,13 +126,10 @@ export function NumberField({
         )}
         <Input
           id={id}
-          type="number"
+          type="text"
           inputMode="decimal"
-          value={Number.isFinite(value) ? value : ""}
+          value={text}
           onChange={handleInputChange}
-          min={min}
-          max={max}
-          step={step}
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy}
           className={cn("tabular-nums", prefix && "pl-11", suffix && "pr-9")}
@@ -93,7 +147,7 @@ export function NumberField({
           min={min}
           max={max}
           step={step ?? 1}
-          onValueChange={(v) => onChange(v[0])}
+          onValueChange={handleSlider}
           aria-label={label}
         />
       )}

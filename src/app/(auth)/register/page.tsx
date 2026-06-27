@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { googleEnabled } from "@/auth";
+import { getDict } from "@/lib/i18n/server";
 import { RegisterForm } from "@/components/auth/register-form";
 import {
   Card,
@@ -16,15 +17,14 @@ export default async function RegisterPage({
 }) {
   const { next } = await searchParams;
   const target = next ?? "/dashboard";
+  const t = await getDict();
 
   return (
     <div className="mx-auto flex max-w-md flex-col px-4 py-16">
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Create your account</CardTitle>
-          <CardDescription>
-            Free, and your numbers stay yours. Save as many plans as you like.
-          </CardDescription>
+          <CardTitle className="text-xl">{t.authPages.registerTitle}</CardTitle>
+          <CardDescription>{t.authPages.registerDesc}</CardDescription>
         </CardHeader>
         <CardContent>
           <RegisterForm googleEnabled={googleEnabled} next={target} />
@@ -32,12 +32,12 @@ export default async function RegisterPage({
       </Card>
 
       <p className="text-muted-foreground mt-4 text-center text-sm">
-        Already have an account?{" "}
+        {t.authPages.alreadyHave}{" "}
         <Link
           href={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}
           className="text-primary font-medium hover:underline"
         >
-          Sign in
+          {t.authPages.signInLink}
         </Link>
       </p>
     </div>

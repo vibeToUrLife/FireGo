@@ -3,12 +3,15 @@ import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { LanguageProvider } from "@/lib/i18n/provider";
+import { getLang, getDict } from "@/lib/i18n/server";
 
 /*
   Fonts are loaded with next/font, which self-hosts them (no layout shift, no
   request to Google at runtime) and exposes each as a CSS variable that our
   Tailwind theme picks up. IBM Plex Sans reads as financial and trustworthy;
-  IBM Plex Mono gives the big figures a precise, tabular feel.
+  IBM Plex Mono gives the big figures a precise, tabular feel. Chinese glyphs
+  fall back to the system CJK fonts declared in globals.css.
 */
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
@@ -24,24 +27,30 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "FireGo — Will your savings last through retirement?",
-  description:
-    "A calm, honest retirement calculator. See how your savings grow, when you can retire, and whether the money lasts — no hype, no guesswork.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDict();
+  return {
+    title: t.metadata.title,
+    description: t.metadata.description,
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const lang = await getLang();
+
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${plexSans.variable} ${plexMono.variable} h-full`}
     >
       <body className="flex min-h-dvh flex-col">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <LanguageProvider initialLang={lang}>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </LanguageProvider>
       </body>
     </html>
   );

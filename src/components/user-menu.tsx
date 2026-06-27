@@ -3,6 +3,7 @@
 import { signOut } from "next-auth/react";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDict } from "@/lib/i18n/provider";
 
 /**
  * Shows the signed-in user's initial + name and a sign-out button. Kept as a
@@ -15,7 +16,8 @@ export function UserMenu({
   name?: string | null;
   email?: string | null;
 }) {
-  const label = name || email || "Account";
+  const t = useDict();
+  const label = name || email || t.nav.account;
   const initial = (name || email || "?").charAt(0).toUpperCase();
 
   return (
@@ -33,10 +35,10 @@ export function UserMenu({
         variant="ghost"
         size="sm"
         onClick={() => signOut({ callbackUrl: "/" })}
-        aria-label="Sign out"
+        aria-label={t.nav.signOut}
       >
         <LogOut />
-        <span className="hidden sm:inline">Sign out</span>
+        <span className="hidden sm:inline">{t.nav.signOut}</span>
       </Button>
     </div>
   );
