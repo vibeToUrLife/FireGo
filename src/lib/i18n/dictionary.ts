@@ -105,9 +105,9 @@ const en = {
       "In today's money — what a year of retirement costs you now.",
     targetWithdrawalRate: "Withdrawal rate",
     targetWithdrawalRateHelper:
-      "Of your pot at retirement, taken in year one. ~4% is a common guide.",
+      "Taken from your balance each year — the rest keeps compounding, so the amount grows over time and the pot never fully empties.",
     derivedSpending: (perYear: string, perMonth: string) =>
-      `≈ ${perYear}/year (${perMonth}/month) drawn from savings at this rate.`,
+      `≈ ${perYear}/year (${perMonth}/month) in year one — it grows as your balance does.`,
     otherIncome: "Other yearly income (optional)",
     otherIncomeHelper:
       "Government pension, annuity, rent… reduces what savings must cover.",
@@ -143,7 +143,7 @@ const en = {
     statRealReturn: "Real return",
     statPerYearAfterInflation: "a year, after inflation",
     statWithdrawalRate: "Withdrawal rate",
-    statWithdrawalRateSub: "first-year draw — ~4% is a common guide",
+    statWithdrawalRateSub: "starting draw — ~4% is a common guide",
   },
 
   warnings: {
@@ -431,9 +431,9 @@ const zh: Dict = {
     desiredSpendingHelper: "以今天的购买力计算——现在过一年退休生活要花多少。",
     targetWithdrawalRate: "提取率",
     targetWithdrawalRateHelper:
-      "退休首年从退休时的本金里取出的比例。常以约 4% 为参照。",
+      "每年从当时的余额里按此比例取出——其余的继续复利，所以取出的金额会逐年增长，本金也不会被完全取空。",
     derivedSpending: (perYear: string, perMonth: string) =>
-      `按此比率，约从储蓄中取出每年 ${perYear}（每月 ${perMonth}）。`,
+      `第一年约取出 ${perYear}（每月 ${perMonth}）——之后随余额一起增长。`,
     otherIncome: "其他每年收入（选填）",
     otherIncomeHelper: "政府退休金、年金、租金……可减少储蓄需要承担的部分。",
 
@@ -467,7 +467,7 @@ const zh: Dict = {
     statRealReturn: "实际回报",
     statPerYearAfterInflation: "每年，扣除通胀后",
     statWithdrawalRate: "提取率",
-    statWithdrawalRateSub: "退休首年提取占比——常以约 4% 为参照",
+    statWithdrawalRateSub: "起始提取占比——常以约 4% 为参照",
   },
 
   warnings: {

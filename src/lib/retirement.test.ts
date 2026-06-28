@@ -312,54 +312,10 @@ describe("projectRetirement — withdrawal rate", () => {
   });
 });
 
-describe("projectRetirement — rate-driven spending", () => {
-  it("derives the yearly spend from the target rate and the retirement pot", () => {
-    const r = projectRetirement(
-      makeInputs({
-        currentAge: 64,
-        retirementAge: 65,
-        planToAge: 90,
-        currentSavings: 1_000_000,
-        monthlyContribution: 0,
-        monthlyIncome: 0,
-        pensionContributionPct: 0,
-        nominalReturnPct: 5,
-        inflationPct: 5, // real return 0 -> pot stays at 1,000,000
-        spendingMode: "rate",
-        targetWithdrawalRatePct: 4,
-        otherAnnualIncome: 0,
-      }),
-    );
-    // 4% of a 1,000,000 pot is drawn from savings each year.
-    expect(r.netAnnualSpending).toBeCloseTo(40_000, 4);
-    expect(r.effectiveDesiredAnnualSpending).toBeCloseTo(40_000, 4);
-    expect(r.initialWithdrawalRatePct).toBeCloseTo(4, 6);
-  });
-
-  it("adds other income on top of the rate-derived draw for the gross spend", () => {
-    const r = projectRetirement(
-      makeInputs({
-        currentAge: 64,
-        retirementAge: 65,
-        planToAge: 90,
-        currentSavings: 1_000_000,
-        monthlyContribution: 0,
-        monthlyIncome: 0,
-        pensionContributionPct: 0,
-        nominalReturnPct: 5,
-        inflationPct: 5,
-        spendingMode: "rate",
-        targetWithdrawalRatePct: 4,
-        otherAnnualIncome: 12_000,
-      }),
-    );
-    // Savings still supply 40k; the gross spend is that plus the 12k other income.
-    expect(r.netAnnualSpending).toBeCloseTo(40_000, 4);
-    expect(r.effectiveDesiredAnnualSpending).toBeCloseTo(52_000, 4);
-  });
-
-  it("a higher target rate empties the pot sooner", () => {
-    const base = {
+describe("projectRetirement — rate-driven spending (% of balance)", () => {
+  // A 1,000,000 pot with no further contributions; return varies per test.
+  const ratePlan = (overrides: Partial<RetirementInputs> = {}) =>
+    makeInputs({
       currentAge: 64,
       retirementAge: 65,
       planToAge: 95,
@@ -367,19 +323,76 @@ describe("projectRetirement — rate-driven spending", () => {
       monthlyContribution: 0,
       monthlyIncome: 0,
       pensionContributionPct: 0,
-      spendingMode: "rate" as const,
+      spendingMode: "rate",
+      targetWithdrawalRatePct: 4,
       otherAnnualIncome: 0,
-    };
-    const modest = projectRetirement(
-      makeInputs({ ...base, targetWithdrawalRatePct: 3 }),
+      ...overrides,
+    });
+
+  it("first-year draw is the rate applied to the pot at retirement", () => {
+    // Real return 0 keeps the pot at 1,000,000, so year one draws exactly 4%.
+    const r = projectRetirement(
+      ratePlan({ nominalReturnPct: 5, inflationPct: 5 }),
     );
-    const aggressive = projectRetirement(
-      makeInputs({ ...base, targetWithdrawalRatePct: 9 }),
+    expect(r.netAnnualSpending).toBeCloseTo(40_000, 4);
+    expect(r.effectiveDesiredAnnualSpending).toBeCloseTo(40_000, 4);
+    expect(r.initialWithdrawalRatePct).toBeCloseTo(4, 6);
+  });
+
+  it("adds other income on top of the rate-derived draw for the gross spend", () => {
+    const r = projectRetirement(
+      ratePlan({
+        nominalReturnPct: 5,
+        inflationPct: 5,
+        otherAnnualIncome: 12_000,
+      }),
     );
-    expect(aggressive.netAnnualSpending).toBeGreaterThan(
-      modest.netAnnualSpending,
+    expect(r.netAnnualSpending).toBeCloseTo(40_000, 4);
+    expect(r.effectiveDesiredAnnualSpending).toBeCloseTo(52_000, 4);
+  });
+
+  it("draws the same % of the balance every year and never depletes", () => {
+    const r = projectRetirement(
+      ratePlan({ nominalReturnPct: 7, inflationPct: 3 }),
     );
-    expect(aggressive.willLast).toBe(false);
+    expect(r.willLast).toBe(true);
+    expect(r.depletionAge).toBeNull();
+    for (const row of r.yearly.filter((y) => y.phase === "drawdown")) {
+      expect(row.withdrawalRatePct).toBeCloseTo(4, 6);
+    }
+  });
+
+  it("the amount drawn grows over time when the return outpaces the rate", () => {
+    // Real return 9% > 4% rate -> the pot, and each year's 4%, grow in real terms.
+    const r = projectRetirement(
+      ratePlan({ nominalReturnPct: 9, inflationPct: 0 }),
+    );
+    const draws = r.yearly
+      .filter((y) => y.phase === "drawdown")
+      .map((y) => y.withdrawals);
+    expect(draws[draws.length - 1]).toBeGreaterThan(draws[0]);
+    expect(r.endingBalance).toBeGreaterThan(1_000_000);
+  });
+
+  it("a higher rate draws more up front but leaves a smaller pot", () => {
+    const low = projectRetirement(
+      ratePlan({
+        nominalReturnPct: 8,
+        inflationPct: 0,
+        targetWithdrawalRatePct: 3,
+      }),
+    );
+    const high = projectRetirement(
+      ratePlan({
+        nominalReturnPct: 8,
+        inflationPct: 0,
+        targetWithdrawalRatePct: 9,
+      }),
+    );
+    expect(high.netAnnualSpending).toBeGreaterThan(low.netAnnualSpending);
+    expect(high.endingBalance).toBeLessThan(low.endingBalance);
+    expect(low.willLast).toBe(true);
+    expect(high.willLast).toBe(true);
   });
 });
 

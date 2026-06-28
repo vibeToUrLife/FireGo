@@ -168,14 +168,14 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
     warnings.push("retiredAlready");
   }
 
-  // 3. What we must pull from savings each year. In "amount" mode this is fixed
-  //    up front (desired − other income). In "rate" mode it depends on the pot at
-  //    retirement, which we only know once accumulation has run — so we resolve it
-  //    lazily on the first drawdown month (see the loop below).
+  // 3. What we draw from savings each month during retirement.
+  //    - "amount" mode: a fixed real spend (desired − other income), set up front.
+  //    - "rate" mode: a % of the CURRENT balance, recomputed at the start of each
+  //      drawdown year (see the loop) — so the rest keeps compounding, the amount
+  //      drawn tracks the portfolio, and the pot is never fully emptied.
   const amountModeNet = Math.max(0, desiredAnnualSpending - otherAnnualIncome);
-  let netAnnualSpending = spendingMode === "rate" ? 0 : amountModeNet;
-  let monthlyNet = netAnnualSpending / MONTHS_PER_YEAR;
-  let spendingResolved = spendingMode !== "rate";
+  let monthlyNet =
+    spendingMode === "rate" ? 0 : amountModeNet / MONTHS_PER_YEAR;
 
   // 4. Walk month by month, recording a row at each year boundary.
   const pensionRate = pensionContributionPct / 100;
@@ -235,15 +235,13 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
       balance = balance * (1 + rm) + monthlyContrib;
       yearContributions += monthlyContrib;
     } else if (depletedAtMonth === null) {
-      // First drawdown month in "rate" mode: the pot at retirement is now known,
-      // so lock in the yearly spend that the target withdrawal rate implies.
-      if (!spendingResolved) {
-        netAnnualSpending = Math.max(
-          0,
-          (targetWithdrawalRatePct / 100) * balanceAtRetirement,
-        );
-        monthlyNet = netAnnualSpending / MONTHS_PER_YEAR;
-        spendingResolved = true;
+      // In "rate" mode, reset this year's draw to a % of the balance at the start
+      // of the drawdown year (year boundaries land on m % 12 === 0). Drawing only a
+      // share each year leaves the rest to compound, so the amount grows with the
+      // pot and it never fully depletes.
+      if (spendingMode === "rate" && m % MONTHS_PER_YEAR === 0) {
+        monthlyNet =
+          ((targetWithdrawalRatePct / 100) * balance) / MONTHS_PER_YEAR;
       }
       // Withdraw this month's living costs first…
       balance -= monthlyNet;
@@ -312,17 +310,24 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
     drawdownMonths,
   );
 
-  // The gross spend the plan actually used: in "rate" mode it's what we derived
-  // from the rate (net drawn from savings) plus any other income; in "amount"
-  // mode it's simply the user's desired figure.
+  // The first-year draw from savings. In "rate" mode it's the rate applied to the
+  // pot at retirement (the draw then grows year to year); in "amount" mode it's
+  // the fixed net spend.
+  const netAnnualSpending =
+    spendingMode === "rate"
+      ? (targetWithdrawalRatePct / 100) * Math.max(0, balanceAtRetirement)
+      : amountModeNet;
+
+  // The gross first-year spend the plan starts you on: the net draw plus any other
+  // income (in "amount" mode that's just the user's desired figure).
   const effectiveDesiredAnnualSpending =
     spendingMode === "rate"
       ? netAnnualSpending + otherAnnualIncome
       : desiredAnnualSpending;
 
   // Initial withdrawal rate: the first year's net draw as a % of the retirement
-  // pot — the figure to sanity-check against the ~4% guideline. null if there's
-  // no pot to draw from.
+  // pot — the figure to sanity-check against the ~4% guideline. In "rate" mode it
+  // simply equals the target rate. null if there's no pot to draw from.
   const initialWithdrawalRatePct =
     balanceAtRetirement > 0
       ? (netAnnualSpending / balanceAtRetirement) * 100

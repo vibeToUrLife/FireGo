@@ -137,7 +137,11 @@ export interface RetirementResult {
   realAnnualReturnPct: number;
   /** Portfolio value the moment they retire. */
   balanceAtRetirement: number;
-  /** Net amount that must come from savings each year = desired - other income (never below 0). */
+  /**
+   * Net amount drawn from savings in the FIRST retirement year. In "amount" mode
+   * that's desired − other income (constant thereafter); in "rate" mode it's the
+   * target rate applied to the pot at retirement, and the draw grows year to year.
+   */
   netAnnualSpending: number;
   /**
    * The gross yearly spending the projection actually used, in today's money. In

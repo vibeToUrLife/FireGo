@@ -107,7 +107,11 @@ export function Calculator({
       <div className="space-y-6">
         <ResultsSummary result={result} />
 
-        <SpendingComparison result={result} />
+        {/* The desired-vs-sustainable check assumes a fixed yearly spend, so it
+            only applies in "amount" mode (in "rate" mode the spend grows). */}
+        {inputs.spendingMode === "amount" && (
+          <SpendingComparison result={result} />
+        )}
 
         <Card>
           <CardHeader>
