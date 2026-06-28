@@ -232,6 +232,10 @@ const en = {
     colEnd: "End",
     phaseSaving: "Saving",
     phaseDrawing: "Drawing",
+    rateNote: (pct: number) =>
+      `Rate mode: each year draws ${pct}% of that year's starting balance and the rest keeps compounding — so "Draw %" stays at ${pct}% while the amount taken out grows year to year, and the pot is never emptied.`,
+    amountNote:
+      'Amount mode: spending is a fixed sum in today\'s money, so as the balance falls the "Draw %" naturally climbs each year.',
   },
 
   disclaimer: {
@@ -556,6 +560,10 @@ const zh: Dict = {
     colEnd: "期末",
     phaseSaving: "储蓄中",
     phaseDrawing: "支取中",
+    rateNote: (pct: number) =>
+      `比率模式：每年取出当年期初余额的 ${pct}%，其余继续复利——所以「提取%」恒定为 ${pct}%，而「取出」金额逐年增长，本金也取不空。`,
+    amountNote:
+      "金额模式：支出是固定的（今天购买力），余额下降时「提取%」会逐年自然升高。",
   },
 
   disclaimer: {
