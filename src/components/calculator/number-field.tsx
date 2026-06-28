@@ -21,6 +21,8 @@ export interface NumberFieldProps {
   error?: string;
   /** Show a drag slider under the input (needs min + max). */
   slider?: boolean;
+  /** Optional control rendered at the right end of the label row, e.g. a unit toggle. */
+  headerRight?: React.ReactNode;
 }
 
 function clamp(n: number, min: number, max: number) {
@@ -77,6 +79,7 @@ export function NumberField({
   helper,
   error,
   slider = false,
+  headerRight,
 }: NumberFieldProps) {
   const id = useId();
   const allowNegative = min === undefined ? true : min < 0;
@@ -116,7 +119,14 @@ export function NumberField({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      {headerRight ? (
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor={id}>{label}</Label>
+          {headerRight}
+        </div>
+      ) : (
+        <Label htmlFor={id}>{label}</Label>
+      )}
 
       <div className="relative">
         {prefix && (

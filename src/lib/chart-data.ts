@@ -112,7 +112,9 @@ export interface SpendingComparison {
 export function spendingComparison(
   result: RetirementResult,
 ): SpendingComparison {
-  const desired = result.inputs.desiredAnnualSpending;
+  // Use the effective spend so "rate" mode compares the derived figure, not the
+  // (unused) desiredAnnualSpending input.
+  const desired = result.effectiveDesiredAnnualSpending;
   const sustainable = result.sustainableAnnualSpending;
   return {
     desired,

@@ -55,8 +55,23 @@ export interface RetirementInputs {
   monthlyIncome: number;
   /** Employer + employee retirement/pension contribution, as a % of monthly income. */
   pensionContributionPct: number;
-  /** Real (above-inflation) annual raise applied to income + contributions. 0 = contributions stay flat in today's money. */
+  /**
+   * How the yearly contribution increase is expressed:
+   *   - "percent": a real (above-inflation) % raise applied to income + contributions (compounding).
+   *   - "amount":  a fixed extra amount added to the personal monthly contribution each year (linear).
+   */
+  contributionIncreaseMode: "percent" | "amount";
+  /** Real (above-inflation) annual raise applied to income + contributions, used when mode is "percent". 0 = contributions stay flat in today's money. */
   annualContributionIncreasePct: number;
+  /** Extra personal monthly contribution added each year, in today's money, used when mode is "amount". Pension stays income-linked and flat. */
+  annualContributionIncreaseAmount: number;
+  /**
+   * Optional ceiling, in today's money, on the personal monthly contribution as it
+   * grows. Once the rising contribution would exceed this, it's held here. 0 (or
+   * empty) means no cap — the contribution grows unbounded. The pension is
+   * income-linked and never capped by this.
+   */
+  monthlyContributionCap: number;
 
   // --- Returns + inflation ---
   /** Expected nominal annual investment return, before inflation. */
@@ -65,8 +80,17 @@ export interface RetirementInputs {
   inflationPct: number;
 
   // --- Spending down (drawdown phase) ---
-  /** Desired annual spending in retirement, in today's money. */
+  /**
+   * How retirement spending is specified:
+   *   - "amount": the user enters a desired yearly spend (desiredAnnualSpending drives the drawdown).
+   *   - "rate":   the user enters a target withdrawal rate; the yearly spend is derived from the
+   *               retirement pot (targetWithdrawalRatePct × balance at retirement). The "4% rule".
+   */
+  spendingMode: "amount" | "rate";
+  /** Desired annual spending in retirement, in today's money. Used when spendingMode is "amount". */
   desiredAnnualSpending: number;
+  /** Initial withdrawal rate as a % of the balance at retirement. Used when spendingMode is "rate". */
+  targetWithdrawalRatePct: number;
   /** Other guaranceed annual retirement income (gov pension, annuity, rental…), today's money. Reduces what must come from savings. */
   otherAnnualIncome: number;
 
@@ -97,6 +121,12 @@ export interface YearRow {
   growth: number;
   /** Portfolio value at the end of the year. */
   endBalance: number;
+  /**
+   * Withdrawals this year as a % of the portfolio at the START of the year — the
+   * "how fast am I drawing down?" figure. Only meaningful in drawdown; null while
+   * saving (no withdrawals) or when there's nothing left to draw from.
+   */
+  withdrawalRatePct: number | null;
 }
 
 /** The full result the engine hands back to the UI/API. */
@@ -109,6 +139,19 @@ export interface RetirementResult {
   balanceAtRetirement: number;
   /** Net amount that must come from savings each year = desired - other income (never below 0). */
   netAnnualSpending: number;
+  /**
+   * The gross yearly spending the projection actually used, in today's money. In
+   * "amount" mode this is the user's desired spending; in "rate" mode it's derived
+   * from the withdrawal rate (net drawn from savings + other income). The UI shows
+   * this so a rate-mode plan still displays a concrete spending figure.
+   */
+  effectiveDesiredAnnualSpending: number;
+  /**
+   * Initial withdrawal rate = first-year net withdrawal ÷ balance at retirement,
+   * as a %. The headline "are you within the 4% guide?" number. null when there's
+   * no pot to draw from (e.g. already retired with no savings).
+   */
+  initialWithdrawalRatePct: number | null;
   /** Does the money last all the way to planToAge? */
   willLast: boolean;
   /** The age the money runs out, or null if it lasts. May be fractional (e.g. 84.5). */

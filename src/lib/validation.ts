@@ -13,7 +13,7 @@
  */
 
 import { z } from "zod";
-import { LIMITS } from "./constants";
+import { LIMITS, DEFAULT_INPUTS } from "./constants";
 
 /**
  * The full set of calculator inputs. `z.coerce.number()` means a value arriving
@@ -49,10 +49,26 @@ export const retirementInputSchema = z
       .number()
       .min(LIMITS.pct.min)
       .max(LIMITS.pct.max),
+    // New fields default so older saved plans / share links (which lack them)
+    // still parse cleanly into the current shape.
+    contributionIncreaseMode: z
+      .enum(["percent", "amount"])
+      .default(DEFAULT_INPUTS.contributionIncreaseMode),
     annualContributionIncreasePct: z.coerce
       .number()
       .min(LIMITS.raisePct.min)
       .max(LIMITS.raisePct.max),
+    annualContributionIncreaseAmount: z.coerce
+      .number()
+      .min(LIMITS.raiseAmount.min)
+      .max(LIMITS.raiseAmount.max)
+      .default(DEFAULT_INPUTS.annualContributionIncreaseAmount),
+    // 0 = no cap. Bounded by the same ceiling as any monthly money figure.
+    monthlyContributionCap: z.coerce
+      .number()
+      .min(LIMITS.monthlyMoney.min)
+      .max(LIMITS.monthlyMoney.max)
+      .default(DEFAULT_INPUTS.monthlyContributionCap),
     nominalReturnPct: z.coerce
       .number()
       .min(LIMITS.returnPct.min)
@@ -61,10 +77,18 @@ export const retirementInputSchema = z
       .number()
       .min(LIMITS.inflationPct.min)
       .max(LIMITS.inflationPct.max),
+    spendingMode: z
+      .enum(["amount", "rate"])
+      .default(DEFAULT_INPUTS.spendingMode),
     desiredAnnualSpending: z.coerce
       .number()
       .min(LIMITS.money.min)
       .max(LIMITS.money.max),
+    targetWithdrawalRatePct: z.coerce
+      .number()
+      .min(LIMITS.withdrawalRatePct.min)
+      .max(LIMITS.withdrawalRatePct.max)
+      .default(DEFAULT_INPUTS.targetWithdrawalRatePct),
     otherAnnualIncome: z.coerce
       .number()
       .min(LIMITS.money.min)

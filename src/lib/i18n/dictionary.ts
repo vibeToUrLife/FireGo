@@ -69,6 +69,8 @@ const en = {
       "A planning horizon — how long the money may need to last.",
 
     currentSavings: "Current savings",
+    currentSavingsHelper:
+      "Already invested today — it compounds at your expected return until you retire.",
     monthlyContribution: "Monthly contribution",
     monthlyContributionHelper:
       "What you put away each month, in today's money.",
@@ -79,15 +81,33 @@ const en = {
     pensionHelper: "Of your monthly income (employer + employee).",
     yearlyIncrease: "Yearly contribution increase",
     yearlyIncreaseHelper: "Real raises above inflation. Leave at 0 if unsure.",
+    yearlyIncreaseAmountHelper:
+      "A fixed extra added to your monthly saving each year. Pension stays income-linked.",
+    increaseModeAria: "Increase unit",
+    modePercent: "%",
+    modeAmount: "Amount",
+    contributionCap: "Contribution cap (optional)",
+    contributionCapHelper:
+      "The most your monthly contribution will grow to. Leave at 0 for no limit.",
 
     expectedReturn: "Expected return (before inflation)",
     expectedReturnHelper: "A broad market average is often 5–8% a year.",
     inflation: "Inflation",
     inflationHelper: "How fast prices rise. Often around 2–3% a year.",
 
+    retirementNote:
+      "Contributions stop at retirement — from here the plan only draws down and grows what's left.",
+    spendingModeAria: "Spending unit",
+    spendingModeAmount: "Amount",
+    spendingModeRate: "Rate",
     desiredSpending: "Desired yearly spending",
     desiredSpendingHelper:
       "In today's money — what a year of retirement costs you now.",
+    targetWithdrawalRate: "Withdrawal rate",
+    targetWithdrawalRateHelper:
+      "Of your pot at retirement, taken in year one. ~4% is a common guide.",
+    derivedSpending: (perYear: string, perMonth: string) =>
+      `≈ ${perYear}/year (${perMonth}/month) drawn from savings at this rate.`,
     otherIncome: "Other yearly income (optional)",
     otherIncomeHelper:
       "Government pension, annuity, rent… reduces what savings must cover.",
@@ -122,6 +142,8 @@ const en = {
     statPerMoSustainably: (amount: string) => `≈ ${amount}/mo sustainably`,
     statRealReturn: "Real return",
     statPerYearAfterInflation: "a year, after inflation",
+    statWithdrawalRate: "Withdrawal rate",
+    statWithdrawalRateSub: "first-year draw — ~4% is a common guide",
   },
 
   warnings: {
@@ -149,14 +171,17 @@ const en = {
   charts: {
     panelAria: "Choose a chart",
     tabBalance: "Balance",
-    tabBalanceHint: "Your total savings over your life.",
+    tabBalanceHint:
+      "Your total savings over your life — climbing while you save, peaking at retirement, then drawn down. The dashed line marks when you retire.",
     tabComposition: "Composition",
     tabCompositionHint:
-      "How much of the pot is your deposits vs. investment growth.",
+      "The same pot split into the money you put in vs. what investment growth added on top. Watch the growth band widen — that's compounding at work.",
     tabCashflow: "Cash flow",
-    tabCashflowHint: "Money paid in each year, then drawn out in retirement.",
+    tabCashflowHint:
+      "Each year's money in (while saving), then money out (in retirement). Bars above the line are paid in; below the line, taken out.",
     tabScenarios: "Scenarios",
-    tabScenariosHint: "How the plan changes if returns are higher or lower.",
+    tabScenariosHint:
+      "The same plan at a lower, expected, and higher return, so you can see how much the outcome hinges on that one assumption.",
 
     ageLabel: (age: number) => `Age ${age}`,
     retire: (age: number) => `Retire ${age}`,
@@ -203,6 +228,7 @@ const en = {
     colAdded: "Added",
     colGrowth: "Growth",
     colTakenOut: "Taken out",
+    colWithdrawalRate: "Draw %",
     colEnd: "End",
     phaseSaving: "Saving",
     phaseDrawing: "Drawing",
@@ -374,6 +400,8 @@ const zh: Dict = {
     planToAgeHelper: "一个规划期限——这笔钱可能需要支撑多久。",
 
     currentSavings: "当前储蓄",
+    currentSavingsHelper:
+      "今天已经投资的钱——会按你的预期回报率一起复利，直到退休。",
     monthlyContribution: "每月投入",
     monthlyContributionHelper: "你每月存下的金额，以今天的购买力计算。",
     monthlyIncome: "每月收入（选填）",
@@ -382,14 +410,30 @@ const zh: Dict = {
     pensionHelper: "占你每月收入的比例（雇主 + 雇员）。",
     yearlyIncrease: "每年投入增幅",
     yearlyIncreaseHelper: "高于通胀的实际加薪。不确定就保持 0。",
+    yearlyIncreaseAmountHelper:
+      "每年额外增加的每月存入金额（固定数额）。退休金仍与收入挂钩。",
+    increaseModeAria: "增幅单位",
+    modePercent: "%",
+    modeAmount: "金额",
+    contributionCap: "投入上限（选填）",
+    contributionCapHelper: "你的每月投入最多增长到这里。留 0 表示无上限。",
 
     expectedReturn: "预期回报（扣除通胀前）",
     expectedReturnHelper: "大盘平均通常为每年 5–8%。",
     inflation: "通货膨胀",
     inflationHelper: "物价上涨的速度。通常约为每年 2–3%。",
 
+    retirementNote: "退休后停止投入——从这里开始只支取，并让剩下的钱继续增长。",
+    spendingModeAria: "支出方式",
+    spendingModeAmount: "金额",
+    spendingModeRate: "比率",
     desiredSpending: "期望的每年支出",
     desiredSpendingHelper: "以今天的购买力计算——现在过一年退休生活要花多少。",
+    targetWithdrawalRate: "提取率",
+    targetWithdrawalRateHelper:
+      "退休首年从退休时的本金里取出的比例。常以约 4% 为参照。",
+    derivedSpending: (perYear: string, perMonth: string) =>
+      `按此比率，约从储蓄中取出每年 ${perYear}（每月 ${perMonth}）。`,
     otherIncome: "其他每年收入（选填）",
     otherIncomeHelper: "政府退休金、年金、租金……可减少储蓄需要承担的部分。",
 
@@ -422,6 +466,8 @@ const zh: Dict = {
     statPerMoSustainably: (amount: string) => `≈ 每月 ${amount}（可持续）`,
     statRealReturn: "实际回报",
     statPerYearAfterInflation: "每年，扣除通胀后",
+    statWithdrawalRate: "提取率",
+    statWithdrawalRateSub: "退休首年提取占比——常以约 4% 为参照",
   },
 
   warnings: {
@@ -449,13 +495,17 @@ const zh: Dict = {
   charts: {
     panelAria: "选择图表",
     tabBalance: "余额",
-    tabBalanceHint: "你一生的储蓄总额。",
+    tabBalanceHint:
+      "你一生的储蓄总额——存钱时上升，退休时见顶，之后逐步支取。虚线标出退休的时点。",
     tabComposition: "构成",
-    tabCompositionHint: "储蓄中有多少是你的本金投入，多少是投资增长。",
+    tabCompositionHint:
+      "把储蓄拆成你投入的本金，和投资在其上累积的增长两部分。看增长带逐渐变宽——那就是复利在起作用。",
     tabCashflow: "现金流",
-    tabCashflowHint: "每年投入的钱，以及退休后取出的钱。",
+    tabCashflowHint:
+      "每年的资金进出：存钱时投入，退休后取出。零线以上是投入，以下是取出。",
     tabScenarios: "情景",
-    tabScenariosHint: "回报更高或更低时，方案会如何变化。",
+    tabScenariosHint:
+      "同一套方案在较低、预期、较高回报下的结果，让你看清结局有多依赖这一个假设。",
 
     ageLabel: (age: number) => `${age} 岁`,
     retire: (age: number) => `${age} 岁退休`,
@@ -502,6 +552,7 @@ const zh: Dict = {
     colAdded: "投入",
     colGrowth: "增长",
     colTakenOut: "取出",
+    colWithdrawalRate: "提取%",
     colEnd: "期末",
     phaseSaving: "储蓄中",
     phaseDrawing: "支取中",

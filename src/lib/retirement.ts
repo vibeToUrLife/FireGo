@@ -135,10 +135,15 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
     monthlyContribution,
     monthlyIncome,
     pensionContributionPct,
+    contributionIncreaseMode,
     annualContributionIncreasePct,
+    annualContributionIncreaseAmount,
+    monthlyContributionCap,
     nominalReturnPct,
     inflationPct,
+    spendingMode,
     desiredAnnualSpending,
+    targetWithdrawalRatePct,
     otherAnnualIncome,
   } = inputs;
 
@@ -163,16 +168,20 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
     warnings.push("retiredAlready");
   }
 
-  // 3. What we must pull from savings each year (the rest is covered by other income).
-  const netAnnualSpending = Math.max(
-    0,
-    desiredAnnualSpending - otherAnnualIncome,
-  );
+  // 3. What we must pull from savings each year. In "amount" mode this is fixed
+  //    up front (desired − other income). In "rate" mode it depends on the pot at
+  //    retirement, which we only know once accumulation has run — so we resolve it
+  //    lazily on the first drawdown month (see the loop below).
+  const amountModeNet = Math.max(0, desiredAnnualSpending - otherAnnualIncome);
+  let netAnnualSpending = spendingMode === "rate" ? 0 : amountModeNet;
+  let monthlyNet = netAnnualSpending / MONTHS_PER_YEAR;
+  let spendingResolved = spendingMode !== "rate";
 
   // 4. Walk month by month, recording a row at each year boundary.
   const pensionRate = pensionContributionPct / 100;
   const raisePerYear = annualContributionIncreasePct / 100;
-  const monthlyNet = netAnnualSpending / MONTHS_PER_YEAR;
+  // An optional ceiling on the (growing) personal contribution. 0 means no cap.
+  const hasCap = monthlyContributionCap > 0;
 
   let balance = currentSavings;
   let balanceAtRetirement = currentSavings; // correct already if accumMonths === 0
@@ -195,15 +204,47 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
     }
 
     if (inAccumulation) {
-      // Contributions (and the income they're based on) grow with real raises.
-      const raiseFactor = Math.pow(1 + raisePerYear, yearIndex);
-      const monthlyContrib =
-        (monthlyContribution + monthlyIncome * pensionRate) * raiseFactor;
+      // This month's contribution. In "percent" mode a real raise compounds onto
+      // both your savings and the income the pension tracks. In "amount" mode a
+      // fixed extra is added to your personal savings each year (linear), and the
+      // pension stays income-linked and flat. An optional cap holds the personal
+      // part once it's grown past the ceiling (the pension is never capped here).
+      let monthlyContrib: number;
+      if (contributionIncreaseMode === "amount") {
+        let personal =
+          monthlyContribution + annualContributionIncreaseAmount * yearIndex;
+        if (hasCap) personal = Math.min(personal, monthlyContributionCap);
+        monthlyContrib = personal + monthlyIncome * pensionRate;
+      } else {
+        const raiseFactor = Math.pow(1 + raisePerYear, yearIndex);
+        if (hasCap) {
+          const personal = Math.min(
+            monthlyContribution * raiseFactor,
+            monthlyContributionCap,
+          );
+          monthlyContrib = personal + monthlyIncome * pensionRate * raiseFactor;
+        } else {
+          // No cap: keep the original combined form so results are bit-for-bit
+          // identical to before this option existed.
+          monthlyContrib =
+            (monthlyContribution + monthlyIncome * pensionRate) * raiseFactor;
+        }
+      }
 
       // Grow first, then add this month's contribution.
       balance = balance * (1 + rm) + monthlyContrib;
       yearContributions += monthlyContrib;
     } else if (depletedAtMonth === null) {
+      // First drawdown month in "rate" mode: the pot at retirement is now known,
+      // so lock in the yearly spend that the target withdrawal rate implies.
+      if (!spendingResolved) {
+        netAnnualSpending = Math.max(
+          0,
+          (targetWithdrawalRatePct / 100) * balanceAtRetirement,
+        );
+        monthlyNet = netAnnualSpending / MONTHS_PER_YEAR;
+        spendingResolved = true;
+      }
       // Withdraw this month's living costs first…
       balance -= monthlyNet;
       yearWithdrawals += monthlyNet;
@@ -233,6 +274,11 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
       // Growth is the residual once contributions/withdrawals are accounted for.
       const growth =
         endBalance - yearStartBalance - yearContributions + yearWithdrawals;
+      // This year's draw as a share of the pot it started with (drawdown only).
+      const withdrawalRatePct =
+        yearWithdrawals > 0 && yearStartBalance > 0
+          ? (yearWithdrawals / yearStartBalance) * 100
+          : null;
       yearly.push({
         age: currentAge + yearIndex,
         phase,
@@ -241,6 +287,7 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
         withdrawals: yearWithdrawals,
         growth,
         endBalance,
+        withdrawalRatePct,
       });
     }
   }
@@ -265,7 +312,26 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
     drawdownMonths,
   );
 
-  if (otherAnnualIncome >= desiredAnnualSpending && desiredAnnualSpending > 0) {
+  // The gross spend the plan actually used: in "rate" mode it's what we derived
+  // from the rate (net drawn from savings) plus any other income; in "amount"
+  // mode it's simply the user's desired figure.
+  const effectiveDesiredAnnualSpending =
+    spendingMode === "rate"
+      ? netAnnualSpending + otherAnnualIncome
+      : desiredAnnualSpending;
+
+  // Initial withdrawal rate: the first year's net draw as a % of the retirement
+  // pot — the figure to sanity-check against the ~4% guideline. null if there's
+  // no pot to draw from.
+  const initialWithdrawalRatePct =
+    balanceAtRetirement > 0
+      ? (netAnnualSpending / balanceAtRetirement) * 100
+      : null;
+
+  if (
+    otherAnnualIncome >= effectiveDesiredAnnualSpending &&
+    effectiveDesiredAnnualSpending > 0
+  ) {
     warnings.push("incomeCoversSpending");
   }
 
@@ -274,6 +340,8 @@ export function projectRetirement(inputs: RetirementInputs): RetirementResult {
     realAnnualReturnPct: realReturn * 100,
     balanceAtRetirement,
     netAnnualSpending,
+    effectiveDesiredAnnualSpending,
+    initialWithdrawalRatePct,
     willLast,
     depletionAge,
     endingBalance,

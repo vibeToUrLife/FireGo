@@ -11,6 +11,7 @@ import {
   CalendarClock,
   Coins,
   TrendingUp,
+  Percent,
   CircleCheck,
   TriangleAlert,
   Info,
@@ -53,6 +54,7 @@ export function ResultsSummary({ result }: { result: RetirementResult }) {
     balanceAtRetirement,
     sustainableAnnualSpending,
     realAnnualReturnPct,
+    initialWithdrawalRatePct,
     warnings,
   } = result;
   const c = inputs.currency;
@@ -143,6 +145,16 @@ export function ResultsSummary({ result }: { result: RetirementResult }) {
           label={t.results.statRealReturn}
           value={formatPercent(realAnnualReturnPct)}
           sub={t.results.statPerYearAfterInflation}
+        />
+        <Stat
+          icon={<Percent />}
+          label={t.results.statWithdrawalRate}
+          value={
+            initialWithdrawalRatePct !== null
+              ? formatPercent(initialWithdrawalRatePct)
+              : "—"
+          }
+          sub={t.results.statWithdrawalRateSub}
         />
       </div>
 

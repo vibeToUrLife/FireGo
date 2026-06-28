@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { RetirementResult } from "@/lib/retirement.types";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatPercent } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -35,7 +35,7 @@ export function BreakdownTable({ result }: { result: RetirementResult }) {
 
       {open && (
         <div className="border-border mt-4 overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[660px] border-collapse text-sm">
+          <table className="w-full min-w-[740px] border-collapse text-sm">
             <thead>
               <tr className="border-border bg-muted/60 text-muted-foreground border-b text-left text-xs">
                 <th className="px-3 py-2.5 font-medium">
@@ -55,6 +55,9 @@ export function BreakdownTable({ result }: { result: RetirementResult }) {
                 </th>
                 <th className="px-3 py-2.5 text-right font-medium">
                   {t.breakdown.colTakenOut}
+                </th>
+                <th className="px-3 py-2.5 text-right font-medium">
+                  {t.breakdown.colWithdrawalRate}
                 </th>
                 <th className="px-3 py-2.5 text-right font-medium">
                   {t.breakdown.colEnd}
@@ -90,6 +93,11 @@ export function BreakdownTable({ result }: { result: RetirementResult }) {
                   </td>
                   <td className="text-negative px-3 py-2 text-right font-mono tabular-nums">
                     {y.withdrawals > 0 ? formatCurrency(y.withdrawals, c) : "—"}
+                  </td>
+                  <td className="text-muted-foreground px-3 py-2 text-right font-mono tabular-nums">
+                    {y.withdrawalRatePct !== null
+                      ? formatPercent(y.withdrawalRatePct)
+                      : "—"}
                   </td>
                   <td className="px-3 py-2 text-right font-mono font-medium tabular-nums">
                     {formatCurrency(y.endBalance, c)}

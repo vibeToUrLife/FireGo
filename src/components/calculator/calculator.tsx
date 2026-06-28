@@ -94,7 +94,12 @@ export function Calculator({
           <CardDescription>{t.calculator.adjustHint}</CardDescription>
         </CardHeader>
         <CardContent>
-          <InputsForm inputs={inputs} onChange={update} errors={errors} />
+          <InputsForm
+            inputs={inputs}
+            onChange={update}
+            errors={errors}
+            result={result}
+          />
         </CardContent>
       </Card>
 

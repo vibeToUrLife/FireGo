@@ -15,6 +15,7 @@ import {
 } from "./retirement";
 import type { RetirementInputs } from "./retirement.types";
 import { DEFAULT_INPUTS } from "./constants";
+import { retirementInputSchema } from "./validation";
 
 /** Build a full input object, overriding just the fields a test cares about. */
 function makeInputs(
@@ -257,5 +258,251 @@ describe("projectRetirement — trajectory shape", () => {
     );
     expect(r.yearly).toHaveLength(120 - 16);
     expect(Number.isFinite(r.balanceAtRetirement)).toBe(true);
+  });
+});
+
+describe("projectRetirement — withdrawal rate", () => {
+  it("reports the initial withdrawal rate as net draw over the pot", () => {
+    // Real return 0 and no contributions -> the pot is exactly current savings.
+    const r = projectRetirement(
+      makeInputs({
+        currentAge: 64,
+        retirementAge: 65,
+        planToAge: 90,
+        currentSavings: 1_000_000,
+        monthlyContribution: 0,
+        monthlyIncome: 0,
+        pensionContributionPct: 0,
+        nominalReturnPct: 5,
+        inflationPct: 5, // real return 0 -> pot stays at 1,000,000
+        desiredAnnualSpending: 40_000,
+        otherAnnualIncome: 0,
+      }),
+    );
+    expect(r.balanceAtRetirement).toBeCloseTo(1_000_000, 4);
+    expect(r.initialWithdrawalRatePct).toBeCloseTo(4, 6); // 40k / 1m
+  });
+
+  it("annotates drawdown rows with a rate and leaves accumulation rows null", () => {
+    const r = projectRetirement(makeInputs());
+    for (const row of r.yearly) {
+      if (row.phase === "accumulation") {
+        expect(row.withdrawalRatePct).toBeNull();
+      }
+    }
+    const firstDraw = r.yearly.find(
+      (y) => y.phase === "drawdown" && y.withdrawals > 0,
+    )!;
+    expect(firstDraw.withdrawalRatePct).not.toBeNull();
+    expect(firstDraw.withdrawalRatePct!).toBeGreaterThan(0);
+  });
+
+  it("has no rate to report when there is no pot to draw from", () => {
+    const r = projectRetirement(
+      makeInputs({
+        currentAge: 65,
+        retirementAge: 65,
+        planToAge: 90,
+        currentSavings: 0,
+        monthlyContribution: 0,
+      }),
+    );
+    expect(r.balanceAtRetirement).toBe(0);
+    expect(r.initialWithdrawalRatePct).toBeNull();
+  });
+});
+
+describe("projectRetirement — rate-driven spending", () => {
+  it("derives the yearly spend from the target rate and the retirement pot", () => {
+    const r = projectRetirement(
+      makeInputs({
+        currentAge: 64,
+        retirementAge: 65,
+        planToAge: 90,
+        currentSavings: 1_000_000,
+        monthlyContribution: 0,
+        monthlyIncome: 0,
+        pensionContributionPct: 0,
+        nominalReturnPct: 5,
+        inflationPct: 5, // real return 0 -> pot stays at 1,000,000
+        spendingMode: "rate",
+        targetWithdrawalRatePct: 4,
+        otherAnnualIncome: 0,
+      }),
+    );
+    // 4% of a 1,000,000 pot is drawn from savings each year.
+    expect(r.netAnnualSpending).toBeCloseTo(40_000, 4);
+    expect(r.effectiveDesiredAnnualSpending).toBeCloseTo(40_000, 4);
+    expect(r.initialWithdrawalRatePct).toBeCloseTo(4, 6);
+  });
+
+  it("adds other income on top of the rate-derived draw for the gross spend", () => {
+    const r = projectRetirement(
+      makeInputs({
+        currentAge: 64,
+        retirementAge: 65,
+        planToAge: 90,
+        currentSavings: 1_000_000,
+        monthlyContribution: 0,
+        monthlyIncome: 0,
+        pensionContributionPct: 0,
+        nominalReturnPct: 5,
+        inflationPct: 5,
+        spendingMode: "rate",
+        targetWithdrawalRatePct: 4,
+        otherAnnualIncome: 12_000,
+      }),
+    );
+    // Savings still supply 40k; the gross spend is that plus the 12k other income.
+    expect(r.netAnnualSpending).toBeCloseTo(40_000, 4);
+    expect(r.effectiveDesiredAnnualSpending).toBeCloseTo(52_000, 4);
+  });
+
+  it("a higher target rate empties the pot sooner", () => {
+    const base = {
+      currentAge: 64,
+      retirementAge: 65,
+      planToAge: 95,
+      currentSavings: 1_000_000,
+      monthlyContribution: 0,
+      monthlyIncome: 0,
+      pensionContributionPct: 0,
+      spendingMode: "rate" as const,
+      otherAnnualIncome: 0,
+    };
+    const modest = projectRetirement(
+      makeInputs({ ...base, targetWithdrawalRatePct: 3 }),
+    );
+    const aggressive = projectRetirement(
+      makeInputs({ ...base, targetWithdrawalRatePct: 9 }),
+    );
+    expect(aggressive.netAnnualSpending).toBeGreaterThan(
+      modest.netAnnualSpending,
+    );
+    expect(aggressive.willLast).toBe(false);
+  });
+});
+
+describe("projectRetirement — fixed-amount contribution increase", () => {
+  it("a fixed yearly amount raises the pot versus a flat contribution", () => {
+    const flat = projectRetirement(
+      makeInputs({
+        contributionIncreaseMode: "amount",
+        annualContributionIncreaseAmount: 0,
+      }),
+    );
+    const rising = projectRetirement(
+      makeInputs({
+        contributionIncreaseMode: "amount",
+        annualContributionIncreaseAmount: 200,
+      }),
+    );
+    expect(rising.balanceAtRetirement).toBeGreaterThan(
+      flat.balanceAtRetirement,
+    );
+  });
+
+  it("a zero increase matches a flat percent increase (both stay flat)", () => {
+    const amountFlat = projectRetirement(
+      makeInputs({
+        contributionIncreaseMode: "amount",
+        annualContributionIncreaseAmount: 0,
+      }),
+    );
+    const percentFlat = projectRetirement(
+      makeInputs({
+        contributionIncreaseMode: "percent",
+        annualContributionIncreasePct: 0,
+      }),
+    );
+    expect(amountFlat.balanceAtRetirement).toBeCloseTo(
+      percentFlat.balanceAtRetirement,
+      4,
+    );
+  });
+});
+
+describe("projectRetirement — contribution cap", () => {
+  it("caps how high the growing monthly contribution climbs (percent mode)", () => {
+    // Base monthly contribution is 1,000; a 5% raise over 30 years pushes it far
+    // past 1,200, so a 1,200 cap throttles growth and yields a smaller pot.
+    const uncapped = projectRetirement(
+      makeInputs({
+        annualContributionIncreasePct: 5,
+        monthlyContributionCap: 0,
+      }),
+    );
+    const capped = projectRetirement(
+      makeInputs({
+        annualContributionIncreasePct: 5,
+        monthlyContributionCap: 1_200,
+      }),
+    );
+    expect(capped.balanceAtRetirement).toBeLessThan(
+      uncapped.balanceAtRetirement,
+    );
+  });
+
+  it("caps the fixed-amount increase the same way", () => {
+    const uncapped = projectRetirement(
+      makeInputs({
+        contributionIncreaseMode: "amount",
+        annualContributionIncreaseAmount: 200,
+        monthlyContributionCap: 0,
+      }),
+    );
+    const capped = projectRetirement(
+      makeInputs({
+        contributionIncreaseMode: "amount",
+        annualContributionIncreaseAmount: 200,
+        monthlyContributionCap: 1_500,
+      }),
+    );
+    expect(capped.balanceAtRetirement).toBeLessThan(
+      uncapped.balanceAtRetirement,
+    );
+  });
+
+  it("a cap above any level reached behaves like no cap", () => {
+    const uncapped = projectRetirement(
+      makeInputs({ annualContributionIncreasePct: 5 }),
+    );
+    const highCap = projectRetirement(
+      makeInputs({
+        annualContributionIncreasePct: 5,
+        monthlyContributionCap: 1_000_000,
+      }),
+    );
+    expect(highCap.balanceAtRetirement).toBeCloseTo(
+      uncapped.balanceAtRetirement,
+      4,
+    );
+  });
+});
+
+describe("retirementInputSchema — backward compatibility", () => {
+  it("fills sensible defaults for plans saved before the new fields existed", () => {
+    const legacy: Record<string, unknown> = { ...DEFAULT_INPUTS };
+    delete legacy.spendingMode;
+    delete legacy.targetWithdrawalRatePct;
+    delete legacy.contributionIncreaseMode;
+    delete legacy.annualContributionIncreaseAmount;
+    delete legacy.monthlyContributionCap;
+
+    const parsed = retirementInputSchema.safeParse(legacy);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.spendingMode).toBe("amount");
+      expect(parsed.data.contributionIncreaseMode).toBe("percent");
+      expect(parsed.data.targetWithdrawalRatePct).toBe(
+        DEFAULT_INPUTS.targetWithdrawalRatePct,
+      );
+      expect(parsed.data.annualContributionIncreaseAmount).toBe(
+        DEFAULT_INPUTS.annualContributionIncreaseAmount,
+      );
+      expect(parsed.data.monthlyContributionCap).toBe(
+        DEFAULT_INPUTS.monthlyContributionCap,
+      );
+    }
   });
 });
