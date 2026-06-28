@@ -1,5 +1,7 @@
 # FireGo
 
+**▶︎ Live app: [firego.vercel.app](https://firego.vercel.app/)** — try the finished product, no setup needed.
+
 A calm, honest **retirement calculator**. Enter your age, savings, contributions,
 expected return and inflation, and FireGo shows — in today's money — how your
 savings grow, the pot you'll have at retirement, and **whether the money lasts**
